@@ -1,25 +1,26 @@
-import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Description from './components/Description';
 import Footer from './components/Footer';
 import Gallery from './components/Gallery';
 import Header from './components/Header';
-import Login from './Login';
+import Login from './pages/login';
+import Admin from './pages/admin';
 
 function App() {
   return (
     <div className="App">
       <Router>
-        <Header />
         <Routes>
-          <Route path="/login" element={<Login />} />
           <Route path="/" element={
             <>
+              <Header />
               <Description />
               <Gallery />
               <Footer />
             </>
           } />
+          <Route path="/login" element={<Login />} />
+          <Route path="/admin" element={<Admin />} />
         </Routes>
       </Router>
     </div>
