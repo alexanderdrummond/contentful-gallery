@@ -16,7 +16,7 @@ const Admin = () => {
   useEffect(() => {
     auth.onAuthStateChanged((user) => {
       if (!user) {
-        navigate('/pages/login');
+        navigate('/login');
       }
     });
   }, []);
@@ -29,7 +29,6 @@ const Admin = () => {
     }
   };
 
-  
 
   const client = createClient({
     accessToken: import.meta.env.VITE_CMA_TOKEN,
