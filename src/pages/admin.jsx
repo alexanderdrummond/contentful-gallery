@@ -11,7 +11,12 @@ const Admin = () => {
   const [description, setDescription] = useState('');
   const [galleryImages, setGalleryImages] = useState([]);
   const [imageDescriptions, setImageDescriptions] = useState({});
+  const [selectedFile, setSelectedFile] = useState(null);
   const navigate = useNavigate();
+
+  const handleFileSelect = (e) => {
+    setSelectedFile(e.target.files[0]);
+  };
   
   useEffect(() => {
     auth.onAuthStateChanged((user) => {
@@ -65,14 +70,30 @@ const Admin = () => {
   }, [galleryImages]);
 
   const updateField = async (field, value) => {
-    const space = await client.getSpace('39os5917g9er');
-    const environment = await space.getEnvironment('master');
-    const latestEntry = await environment.getEntry('4KXDxrBvsswjxTu47qvfkU');
-    latestEntry.fields[field]['en-US'] = value;
-    const updatedEntry = await latestEntry.update();
-    await updatedEntry.publish();
-    return updatedEntry;
+    try {
+      const space = await client.getSpace('39os5917g9er');
+      const environment = await space.getEnvironment('master');
+      const latestEntry = await environment.getEntry('4KXDxrBvsswjxTu47qvfkU');
+  
+      
+      const currentVersion = latestEntry.sys.version;
+  
+   
+      latestEntry.fields[field]['en-US'] = value;
+  
+   
+      const updatedEntry = await latestEntry.update({ version: currentVersion });
+  
+      
+      await updatedEntry.publish();
+  
+      return updatedEntry;
+    } catch (error) {
+      console.error(error);
+      notify('Error updating field', 'error');
+    }
   };
+  
 
   const updateImageDescription = async (imageId) => {
     try {
@@ -106,9 +127,36 @@ const Admin = () => {
   };
 
   const deleteImage = async (imageId) => {
-    const filteredImages = galleryImages.filter((img) => img.sys.id !== imageId);
-    await updateField('galleryImages', filteredImages);
+    try {
+      const space = await client.getSpace('39os5917g9er');
+      const environment = await space.getEnvironment('master');
+  
+     
+      const asset = await environment.getAsset(imageId);
+      await asset.unpublish();
+      await asset.delete();
+  
+      
+      const filteredImages = galleryImages.filter((img) => img.sys.id !== imageId);
+      setGalleryImages(filteredImages);
+  
+     
+      const latestEntry = await environment.getEntry('4KXDxrBvsswjxTu47qvfkU');
+      latestEntry.fields.galleryImages['en-US'] = filteredImages.map((img) => ({
+        sys: { type: 'Link', linkType: 'Asset', id: img.sys.id }
+      }));
+      
+      await latestEntry.update();
+      await latestEntry.publish();
+  
+      notify('Image deleted successfully');
+    } catch (error) {
+      notify('Error deleting image', 'error');
+    }
   };
+  
+  
+  
 
   const handleTitleSubmit = async (e) => {
     e.preventDefault();
@@ -123,14 +171,75 @@ const Admin = () => {
   };
 
   const uploadNewImage = async (newImageFile) => {
-    const newImage = {
-      id: 'newId',
-      url: URL.createObjectURL(newImageFile),
-      description: 'New Image',
-    };
-    const updatedImages = [...galleryImages, newImage];
-    await updateField('galleryImages', updatedImages);
+    try {
+      const space = await client.getSpace('39os5917g9er');
+      const environment = await space.getEnvironment('master');
+  
+
+      const fileUpload = await environment.createUpload({
+        file: newImageFile,
+      });
+  
+      
+      const asset = await environment.createAsset({
+        fields: {
+          title: {
+            'en-US': 'New Image',
+          },
+          description: {
+            'en-US': 'New Image',
+          },
+          file: {
+            'en-US': {
+              contentType: newImageFile.type,
+              fileName: newImageFile.name,
+              uploadFrom: {
+                sys: {
+                  type: 'Link',
+                  linkType: 'Upload',
+                  id: fileUpload.sys.id,
+                },
+              },
+            },
+          },
+        },
+      });
+  
+     
+      await asset.processForAllLocales();
+  
+      
+      let processedAsset = null;
+      while (!processedAsset) {
+        await new Promise(resolve => setTimeout(resolve, 1000)); 
+        const tempAsset = await environment.getAsset(asset.sys.id);
+        if (tempAsset.fields.file && tempAsset.fields.file['en-US'] && tempAsset.fields.file['en-US'].url) {
+          processedAsset = tempAsset;
+        }
+      }
+  
+      
+      await processedAsset.publish();
+  
+     
+      const latestEntry = await environment.getEntry('4KXDxrBvsswjxTu47qvfkU');
+      const updatedImages = [...galleryImages, processedAsset];
+      setGalleryImages(updatedImages);
+      latestEntry.fields.galleryImages['en-US'] = updatedImages.map(img => ({ sys: { type: 'Link', linkType: 'Asset', id: img.sys.id } }));
+      const updatedEntry = await latestEntry.update();
+      await updatedEntry.publish();
+  
+      notify('Image uploaded and added to gallery successfully');
+    } catch (error) {
+      console.error(error);
+      notify('Error uploading image', 'error');
+    }
   };
+  
+  
+  
+  
+  
 
   return (
     
@@ -218,16 +327,25 @@ const Admin = () => {
           ))}
         </div>
         <div className="mt-4">
-          <label htmlFor="new-image" className="block text-sm font-medium text-gray-600">
-            Upload New Image
-          </label>
-          <input 
-            type="file" 
-            id="new-image" 
-            onChange={(e) => uploadNewImage(e.target.files[0])} 
-            className="border p-2 rounded"
-          />
-        </div>
+    <label htmlFor="new-image" className="block text-sm font-medium text-gray-600">
+      Upload New Image
+    </label>
+    <div className="flex items-center">
+      <input 
+        type="file" 
+        id="new-image" 
+        onChange={handleFileSelect} 
+        className="border p-2 rounded"
+      />
+      <button 
+        onClick={() => uploadNewImage(selectedFile)} 
+        className="bg-blue-500 text-white p-2 rounded hover:bg-blue-700 ml-2"
+        disabled={!selectedFile}
+      >
+        Upload
+      </button>
+    </div>
+  </div>
       </div>
     </div>
   </div>

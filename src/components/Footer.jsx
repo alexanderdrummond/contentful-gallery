@@ -7,11 +7,11 @@ const Footer = () => {
     <footer className="bg-gray-700 text-white py-8 px-4">
       <div className="container mx-auto flex justify-center">
         <div className="text-center mr-8">
-          <h3 className="text-2xl font-semibold mb-4">Created By</h3>
+          <h3 className="text-xl font-semibold mb-4">Created By</h3>
           <p className="text-lg">Alex and Rasmus</p>
         </div>
         
-        <div className="w-14"></div>
+        <div className="w-5"></div>
         
         <div className="text-center">
           <h4 className="text-xl font-semibold mb-2">Built with</h4>

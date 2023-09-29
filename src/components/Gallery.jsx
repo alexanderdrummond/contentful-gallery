@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import client from '../utils/contentfulClient';
+import { useState, useEffect } from "react";
+import client from "../utils/contentfulClient";
 
 const Gallery = () => {
   const [galleryItems, setGalleryItems] = useState([]);
@@ -8,7 +8,7 @@ const Gallery = () => {
 
   useEffect(() => {
     client
-      .getEntries({ content_type: 'gallery' })
+      .getEntries({ content_type: "gallery" })
       .then((response) => {
         const images = response.items[0]?.fields?.galleryImages || [];
         setGalleryItems(images);
@@ -30,11 +30,16 @@ const Gallery = () => {
   };
 
   const prevImage = () => {
-    setCurrentIndex((currentIndex - 1 + galleryItems.length) % galleryItems.length);
+    setCurrentIndex(
+      (currentIndex - 1 + galleryItems.length) % galleryItems.length
+    );
   };
 
   return (
-    <div id="gallery" className="bg-gradient-to-r from-gray-50 to-gray-200 py-20">
+    <div
+      id="gallery"
+      className="bg-gradient-to-r from-gray-50 to-gray-200 py-20"
+    >
       <div className="container mx-auto text-center mb-12">
         <div className="inline-block mb-4">
           <svg
@@ -55,6 +60,7 @@ const Gallery = () => {
       <div className="w-11/12 md:w-4/5 lg:w-7/10 mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12">
           {galleryItems.map((item, index) => {
+            if (item && item.fields) {
             const image = item.fields.file.url;
             const description = item.fields.description;
             return (
@@ -73,6 +79,8 @@ const Gallery = () => {
                 </div>
               </div>
             );
+          }
+          return null
           })}
         </div>
       </div>
@@ -89,13 +97,33 @@ const Gallery = () => {
             onClick={prevImage}
             className="fixed left-4 top-1/2 transform -translate-y-1/2 text-2xl text-gray-600 hover:text-gray-900 bg-white rounded-full p-2 z-50"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6l6 6l1.41-1.41z"></path></svg>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="1em"
+              height="1em"
+              viewBox="0 0 24 24"
+            >
+              <path
+                fill="currentColor"
+                d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6l6 6l1.41-1.41z"
+              ></path>
+            </svg>
           </button>
           <button
             onClick={nextImage}
             className="fixed right-4 top-1/2 transform -translate-y-1/2 text-2xl text-gray-600 hover:text-gray-900 bg-white rounded-full p-2 z-50"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M8.59 16.59L13.17 12L8.59 7.41L10 6l6 6l-6 6l-1.41-1.41z"></path></svg>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="1em"
+              height="1em"
+              viewBox="0 0 24 24"
+            >
+              <path
+                fill="currentColor"
+                d="M8.59 16.59L13.17 12L8.59 7.41L10 6l6 6l-6 6l-1.41-1.41z"
+              ></path>
+            </svg>
           </button>
           <div
             className="fixed inset-0 flex items-center justify-center z-40 bg-black bg-opacity-50"
